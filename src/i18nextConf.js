@@ -6,15 +6,16 @@ import translationEN from "./assets/locales/en/translation.json";
 import translationAR from "./assets/locales/ar/translation.json";
 
 const fallbackLng = ["en"];
-const availableLanguages = ["en", "ar"];
+// const availableLanguages = ["en", "ar"];
+const availableLanguages = ["en"];
 
 const resources = {
   en: {
-    translation: translationEN
+    translation: translationEN,
   },
-  ar: {
-    translation: translationAR
-  },
+  // ar: {
+  //   translation: translationAR
+  // },
 };
 
 i18n
@@ -26,7 +27,7 @@ i18n
     fallbackLng,
 
     detection: {
-      checkWhitelist: true
+      checkWhitelist: true,
     },
 
     debug: false,
@@ -34,8 +35,8 @@ i18n
     whitelist: availableLanguages,
 
     interpolation: {
-      escapeValue: false
-    }
+      escapeValue: false,
+    },
   });
 
 export default i18n;
