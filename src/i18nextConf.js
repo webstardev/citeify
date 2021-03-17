@@ -6,16 +6,15 @@ import translationEN from "./assets/locales/en/translation.json";
 import translationAR from "./assets/locales/ar/translation.json";
 
 const fallbackLng = ["en"];
-// const availableLanguages = ["en", "ar"];
-const availableLanguages = ["en"];
+const availableLanguages = ["en", "ar"];
 
 const resources = {
   en: {
     translation: translationEN,
   },
-  // ar: {
-  //   translation: translationAR
-  // },
+  ar: {
+    translation: translationAR,
+  },
 };
 
 i18n

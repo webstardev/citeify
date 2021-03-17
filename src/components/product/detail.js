@@ -1,4 +1,9 @@
-import React, { useState } from "react";
+import React, {
+  useState,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { makeStyles, withStyles } from "@material-ui/core/styles";
 import {
@@ -109,12 +114,15 @@ const options = [
 //     {value:2, label:"No, I will provide my own images"},
 //     {value:3, label:"I'm not sure"},
 // ]
-function Detail(props) {
+
+const Detail = forwardRef((props, ref) => {
   const { t } = useTranslation();
   const classes = useStyles();
+  const formRef = useRef(null);
   const [file, setFile] = useState([]);
   const [productSummary, setProductSummary] = useState("");
 
+  const [formSubmitted, setFormSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     detail_org_name: {
       value: "",
@@ -136,31 +144,38 @@ function Detail(props) {
       validate: true,
       errorMsg: "",
     },
-    detail_industry_industries: options[0],
+    detail_industry_industries: {
+      value: options[0],
+      validate: true,
+      errorMsg: "",
+    },
   });
 
-  function deleteFile(e) {
+  const deleteFile = (e) => {
     const s = file.filter((item, index) => index !== e);
     setFile(s);
     // setToUpload(u);
     // if(s.length<8)setPlusFade("showPlus")
-  }
-  function handlePlusImage() {
+  };
+
+  const handlePlusImage = () => {
     document.getElementById("fileForm").click();
-  }
-  function uploadSingleFile(e) {
+  };
+
+  const uploadSingleFile = (e) => {
     if (e.target.files[0] && file.length <= 8) {
       setFile([...file, URL.createObjectURL(e.target.files[0])]);
       // setToUpload([...toUpload, e.target.files[0]]);
       // if(file.length==7) setPlusFade("hidePlus")
     }
     return;
-  }
-  async function handleProduct(e) {
-    setProductSummary(e.target.value);
-  }
+  };
 
-  function onChange(keyName, value) {
+  const handleProduct = async (e) => {
+    setProductSummary(e.target.value);
+  };
+
+  const onChange = (keyName, value) => {
     let tempFormData = formData;
     tempFormData[keyName] = {
       value: value,
@@ -170,286 +185,355 @@ function Detail(props) {
     setFormData({
       ...tempFormData,
     });
-  }
+  };
+
+  const handleSubmit = (event) => {
+    setFormSubmitted(true);
+  };
+
+  const checkFormValidate = () => {
+    setFormSubmitted(true);
+    let bValidate = true;
+
+    const formDataTemp = { ...formData };
+    Object.keys(formData).map((itemKey) => {
+      const item = formData[itemKey];
+      if (bValidate)
+        bValidate = item.value.toString().length > 0 ? true : false;
+      formDataTemp[itemKey] = {
+        value: item.value,
+        validate: item.value.toString().length > 0 ? true : false,
+        errorMsg: item.value.toString().length > 0 ? "" : "Required Field.",
+      };
+    });
+
+    setFormData({
+      ...formDataTemp,
+    });
+    return bValidate;
+  };
+
+  useImperativeHandle(ref, () => ({
+    checkValidate() {
+      return checkFormValidate();
+    },
+  }));
 
   return (
-    <div className={classes.root}>
-      <div style={{ marginTop: 20, marginBottom: 10 }}>
-        <Grid container xs={12} className={classes.eachGrid}>
-          <Grid item={true} xs={12} sm={4}>
-            <Typography
-              variant="h5"
-              gutterBottom
-              style={{ fontWeight: "bolder", marginTop: 20 }}
-            >
-              {t("detail_product_summary")}
-            </Typography>
-          </Grid>
-          <Grid item={true} xs={12} sm={8}>
-            <Typography
-              variant="body1"
-              gutterBottom
-              style={{ fontWeight: "bolder", marginTop: 20 }}
-            >
-              {t(props.id)}
-            </Typography>
-            {/* <TextField id="outlined-basic" fullWidth label="Input the product summary" variant="outlined" style = {{marginTop:10}} onChange = {handleProduct} value = {productSummary}/> */}
-            {/* <Typography variant="body2" gutterBottom style = {{marginTop:10}}>
-                            We'll hold your data according to our <Link>Privacy Policy</Link>
-                        </Typography>  */}
-          </Grid>
-        </Grid>
-      </div>
-      <Divider />
-      <div style={{ marginTop: 20, marginBottom: 10 }}>
-        <Grid container xs={12} className={classes.eachGrid}>
-          <Grid item={true} xs={12} sm={4}>
-            <Typography
-              variant="h5"
-              gutterBottom
-              style={{ fontWeight: "bolder", marginTop: 20 }}
-            >
-              {t("detail_back_info")}
-            </Typography>
-          </Grid>
-          <Grid item={true} xs={12} sm={8}>
-            <Typography
-              variant="body1"
-              gutterBottom
-              style={{ fontWeight: "bolder", marginTop: 20 }}
-            >
-              {t("detail_org_name")}
-            </Typography>
-            <TextField
-              id="outlined-basic"
-              fullWidth
-              label={t("detail_product_input")}
-              variant="outlined"
-              style={{ marginTop: 10 }}
-              error={!formData.detail_org_name.validate}
-              value={formData.detail_org_name.value}
-              helperText={formData.detail_org_name.errorMsg}
-              onChange={(e) => onChange("detail_org_name", e.target.value)}
-            />
-            <Typography variant="body2" gutterBottom style={{ marginTop: 10 }}>
-              {t("detail_org_example")}
-            </Typography>
-
-            <Typography
-              variant="body1"
-              gutterBottom
-              style={{ fontWeight: "bolder", marginTop: 20 }}
-            >
-              {t("detail_org_description")}
-            </Typography>
-            <TextField
-              style={{ marginTop: 10 }}
-              id="outlined-multiline-static"
-              fullWidth
-              label={t("detail_org_description")}
-              multiline
-              rows={4}
-              variant="outlined"
-              value={formData.detail_org_description.value}
-              helperText={formData.detail_org_description.errorMsg}
-              onChange={(e) =>
-                onChange("detail_org_description", e.target.value)
-              }
-            />
-
-            <Typography
-              variant="body1"
-              gutterBottom
-              style={{ fontWeight: "bolder", marginTop: 20 }}
-            >
-              {t("detail_industry_select")}
-            </Typography>
-            <FormControl variant="outlined" className={classes.formControl}>
-              <InputLabel htmlFor="outlined-age-native-simple">
-                {t("detail_industry_industries")}
-              </InputLabel>
-              <Select
-                native
-                label={t("detail_industry_industries")}
-                fullWidth
-                inputProps={{
-                  name: "age",
-                  id: "outlined-age-native-simple",
-                }}
-                value={formData.detail_industry_industries}
-                onChange={(e) => {
-                  setFormData({
-                    ...formData,
-                    detail_industry_industries: e.target.value,
-                  });
-                }}
+    <form onSubmit={handleSubmit} ref={formRef}>
+      <div className={classes.root}>
+        <div style={{ marginTop: 20, marginBottom: 10 }}>
+          <Grid container xs={12} className={classes.eachGrid}>
+            <Grid item={true} xs={12} sm={4}>
+              <Typography
+                variant="h5"
+                gutterBottom
+                style={{ fontWeight: "bolder", marginTop: 20 }}
               >
-                {options.map((item, index) => {
-                  return (
-                    <option key={index} value={item.value}>
-                      {t(item.label)}
-                    </option>
-                  );
-                })}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-      </div>
-      <Divider />
-      <div style={{ marginTop: 20, marginBottom: 10 }}>
-        <Grid container xs={12} className={classes.eachGrid}>
-          <Grid item={true} xs={12} sm={4}>
-            <Typography
-              variant="h5"
-              gutterBottom
-              style={{ fontWeight: "bolder", marginTop: 20 }}
-            >
-              {t("detail_content_detail")}
-            </Typography>
-          </Grid>
-          <Grid item={true} xs={12} sm={8}>
-            <Typography
-              variant="body1"
-              gutterBottom
-              style={{ fontWeight: "bolder", marginTop: 20 }}
-            >
-              {t("detail_content_description")}
-            </Typography>
-            <TextField
-              style={{ marginTop: 10 }}
-              id="outlined-multiline-static"
-              fullWidth
-              label={t("detail_content_desc_input")}
-              multiline
-              rows={4}
-              variant="outlined"
-              value={formData.detail_content_description.value}
-              helperText={formData.detail_content_description.errorMsg}
-              onChange={(e) =>
-                onChange("detail_content_description", e.target.value)
-              }
-            />
-            <Typography variant="body2" gutterBottom style={{ marginTop: 10 }}>
-              {t("detail_content_example")}
-            </Typography>
-          </Grid>
-        </Grid>
-      </div>
-      <Divider />
-      <div style={{ marginTop: 20, marginBottom: 10 }}>
-        <Grid container xs={12} className={classes.eachGrid}>
-          <Grid item={true} xs={12} sm={4}>
-            <Typography
-              variant="h5"
-              gutterBottom
-              style={{ fontWeight: "bolder" }}
-            >
-              {t("detail_other_header")}
-            </Typography>
-          </Grid>
-          <Grid item={true} xs={12} sm={8}>
-            <Typography
-              variant="body1"
-              gutterBottom
-              style={{ fontWeight: "bolder" }}
-            >
-              {t("detail_other_question")}
-            </Typography>
-            <TextField
-              style={{ marginTop: 10 }}
-              id="outlined-multiline-static"
-              fullWidth
-              label={t("detail_content_desc_input")}
-              multiline
-              rows={4}
-              variant="outlined"
-              value={formData.detail_other_header.value}
-              helperText={formData.detail_other_header.errorMsg}
-              onChange={(e) => onChange("detail_other_header", e.target.value)}
-            />
-            {/* <Typography variant="body1" gutterBottom  style = {{fontWeight:"bolder", marginTop:20,}}>
-                            Allow the use of stock images in your contest? 
-                        </Typography> 
-                        <FormControl variant="outlined" className={classes.formControl}>
-                            <InputLabel htmlFor="outlined-age-native-simple">Select</InputLabel>
-                            <Select
-                            native
-                            label="Select"
-                            fullWidth
-                            inputProps={{
-                                name: 'age',
-                                id: 'outlined-age-native-simple',
-                            }}
-                            >
-                            {imageSelect.map((item, index)=>{
-                                return <option key = {index} value={item.value}>{item.label}</option>
-                            })}
-                            </Select>
-                        </FormControl>
-                        <Typography variant="body2" gutterBottom style = {{marginTop:20}}>
-                           There may be additional costs for designs that use stock images. Designers will include details for stock iamges, so you can buy stock at the end of contest. <Link>Learn more about stock</Link>
-                        </Typography>  */}
-
-            <Typography
-              variant="body1"
-              gutterBottom
-              style={{ fontWeight: "bolder", marginTop: 20 }}
-            >
-              {t("detail_other_image_header")}
-            </Typography>
-
-            <Grid container style={{ marginTop: 10, marginBottom: 10 }}>
-              {file.length > 0 &&
-                file.map((item, index) => {
-                  return (
-                    <Grid
-                      item={true}
-                      key={item}
-                      xs={12}
-                      md={3}
-                      className={classes.imageBody}
-                    >
-                      <img src={item} alt="" className={classes.images} />
-                      <CancelIcon
-                        onClick={() => deleteFile(index)}
-                        className={classes.canelIcon}
-                      />
-                    </Grid>
-                  );
-                })}
-              <Grid item={true} xs={12} md={3}>
-                <div
-                  className={classes.plusImageButton}
-                  onClick={handlePlusImage}
-                >
-                  <AddIcon style={{ fontSize: 30 }} />
-                  <Typography
-                    variant="body1"
-                    gutterBottom
-                    style={{ fontWeight: "bolder", marginTop: 10, padding: 10 }}
-                  >
-                    {t("detail_other_image_picker")}
-                  </Typography>
-                </div>
-              </Grid>
+                {t("detail_product_summary")}
+              </Typography>
             </Grid>
-            <input
-              id="fileForm"
-              type="file"
-              // disabled={file.length === 8}
-              className="form-control"
-              style={{ display: "none" }}
-              onChange={uploadSingleFile}
-            />
-
-            <Typography variant="body2" gutterBottom style={{ marginTop: 10 }}>
-              {t("detail_other_image_example")}
-            </Typography>
+            <Grid item={true} xs={12} sm={8}>
+              <Typography
+                variant="body1"
+                gutterBottom
+                style={{ fontWeight: "bolder", marginTop: 20 }}
+              >
+                {t(props.id)}
+              </Typography>
+              {/* <TextField id="outlined-basic" fullWidth label="Input the product summary" variant="outlined" style = {{marginTop:10}} onChange = {handleProduct} value = {productSummary}/> */}
+              {/* <Typography variant="body2" gutterBottom style = {{marginTop:10}}>
+                                We'll hold your data according to our <Link>Privacy Policy</Link>
+                            </Typography>  */}
+            </Grid>
           </Grid>
-        </Grid>
+        </div>
+        <Divider />
+        <div style={{ marginTop: 20, marginBottom: 10 }}>
+          <Grid container xs={12} className={classes.eachGrid}>
+            <Grid item={true} xs={12} sm={4}>
+              <Typography
+                variant="h5"
+                gutterBottom
+                style={{ fontWeight: "bolder", marginTop: 20 }}
+              >
+                {t("detail_back_info")}
+              </Typography>
+            </Grid>
+            <Grid item={true} xs={12} sm={8}>
+              <Typography
+                variant="body1"
+                gutterBottom
+                style={{ fontWeight: "bolder", marginTop: 20 }}
+              >
+                {t("detail_org_name")}
+              </Typography>
+              <TextField
+                id="outlined-basic"
+                fullWidth
+                label={t("detail_product_input")}
+                variant="outlined"
+                style={{ marginTop: 10 }}
+                error={formSubmitted && !formData.detail_org_name.validate}
+                value={formData.detail_org_name.value}
+                helperText={formSubmitted && formData.detail_org_name.errorMsg}
+                onChange={(e) => onChange("detail_org_name", e.target.value)}
+              />
+              <Typography
+                variant="body2"
+                gutterBottom
+                style={{ marginTop: 10 }}
+              >
+                {t("detail_org_example")}
+              </Typography>
+
+              <Typography
+                variant="body1"
+                gutterBottom
+                style={{ fontWeight: "bolder", marginTop: 20 }}
+              >
+                {t("detail_org_description")}
+              </Typography>
+              <TextField
+                style={{ marginTop: 10 }}
+                id="outlined-multiline-static"
+                fullWidth
+                label={t("detail_org_description")}
+                multiline
+                rows={4}
+                variant="outlined"
+                error={
+                  formSubmitted && !formData.detail_org_description.validate
+                }
+                value={formData.detail_org_description.value}
+                helperText={
+                  formSubmitted && formData.detail_org_description.errorMsg
+                }
+                onChange={(e) =>
+                  onChange("detail_org_description", e.target.value)
+                }
+              />
+
+              <Typography
+                variant="body1"
+                gutterBottom
+                style={{ fontWeight: "bolder", marginTop: 20 }}
+              >
+                {t("detail_industry_select")}
+              </Typography>
+              <FormControl variant="outlined" className={classes.formControl}>
+                <InputLabel htmlFor="outlined-age-native-simple">
+                  {t("detail_industry_industries")}
+                </InputLabel>
+                <Select
+                  native
+                  label={t("detail_industry_industries")}
+                  fullWidth
+                  inputProps={{
+                    name: "age",
+                    id: "outlined-age-native-simple",
+                  }}
+                  value={formData.detail_industry_industries.value}
+                  onChange={(e) => {
+                    setFormData({
+                      ...formData,
+                      detail_industry_industries: {
+                        value: e.target.value,
+                        validate: true,
+                        errorMsg: "",
+                      },
+                    });
+                  }}
+                >
+                  {options.map((item, index) => {
+                    return (
+                      <option key={index} value={item.value}>
+                        {t(item.label)}
+                      </option>
+                    );
+                  })}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </div>
+        <Divider />
+        <div style={{ marginTop: 20, marginBottom: 10 }}>
+          <Grid container xs={12} className={classes.eachGrid}>
+            <Grid item={true} xs={12} sm={4}>
+              <Typography
+                variant="h5"
+                gutterBottom
+                style={{ fontWeight: "bolder", marginTop: 20 }}
+              >
+                {t("detail_content_detail")}
+              </Typography>
+            </Grid>
+            <Grid item={true} xs={12} sm={8}>
+              <Typography
+                variant="body1"
+                gutterBottom
+                style={{ fontWeight: "bolder", marginTop: 20 }}
+              >
+                {t("detail_content_description")}
+              </Typography>
+              <TextField
+                style={{ marginTop: 10 }}
+                id="outlined-multiline-static"
+                fullWidth
+                label={t("detail_content_desc_input")}
+                multiline
+                rows={4}
+                variant="outlined"
+                error={
+                  formSubmitted && !formData.detail_content_description.validate
+                }
+                value={formData.detail_content_description.value}
+                helperText={
+                  formSubmitted && formData.detail_content_description.errorMsg
+                }
+                onChange={(e) =>
+                  onChange("detail_content_description", e.target.value)
+                }
+              />
+              <Typography
+                variant="body2"
+                gutterBottom
+                style={{ marginTop: 10 }}
+              >
+                {t("detail_content_example")}
+              </Typography>
+            </Grid>
+          </Grid>
+        </div>
+        <Divider />
+        <div style={{ marginTop: 20, marginBottom: 10 }}>
+          <Grid container xs={12} className={classes.eachGrid}>
+            <Grid item={true} xs={12} sm={4}>
+              <Typography
+                variant="h5"
+                gutterBottom
+                style={{ fontWeight: "bolder" }}
+              >
+                {t("detail_other_header")}
+              </Typography>
+            </Grid>
+            <Grid item={true} xs={12} sm={8}>
+              <Typography
+                variant="body1"
+                gutterBottom
+                style={{ fontWeight: "bolder" }}
+              >
+                {t("detail_other_question")}
+              </Typography>
+              <TextField
+                style={{ marginTop: 10 }}
+                id="outlined-multiline-static"
+                fullWidth
+                label={t("detail_content_desc_input")}
+                multiline
+                rows={4}
+                variant="outlined"
+                error={formSubmitted && !formData.detail_other_header.validate}
+                value={formData.detail_other_header.value}
+                helperText={
+                  formSubmitted && formData.detail_other_header.errorMsg
+                }
+                onChange={(e) =>
+                  onChange("detail_other_header", e.target.value)
+                }
+              />
+              {/* <Typography variant="body1" gutterBottom  style = {{fontWeight:"bolder", marginTop:20,}}>
+                                Allow the use of stock images in your contest? 
+                            </Typography> 
+                            <FormControl variant="outlined" className={classes.formControl}>
+                                <InputLabel htmlFor="outlined-age-native-simple">Select</InputLabel>
+                                <Select
+                                native
+                                label="Select"
+                                fullWidth
+                                inputProps={{
+                                    name: 'age',
+                                    id: 'outlined-age-native-simple',
+                                }}
+                                >
+                                {imageSelect.map((item, index)=>{
+                                    return <option key = {index} value={item.value}>{item.label}</option>
+                                })}
+                                </Select>
+                            </FormControl>
+                            <Typography variant="body2" gutterBottom style = {{marginTop:20}}>
+                            There may be additional costs for designs that use stock images. Designers will include details for stock iamges, so you can buy stock at the end of contest. <Link>Learn more about stock</Link>
+                            </Typography>  */}
+
+              <Typography
+                variant="body1"
+                gutterBottom
+                style={{ fontWeight: "bolder", marginTop: 20 }}
+              >
+                {t("detail_other_image_header")}
+              </Typography>
+
+              <Grid container style={{ marginTop: 10, marginBottom: 10 }}>
+                {file.length > 0 &&
+                  file.map((item, index) => {
+                    return (
+                      <Grid
+                        item={true}
+                        key={item}
+                        xs={12}
+                        md={3}
+                        className={classes.imageBody}
+                      >
+                        <img src={item} alt="" className={classes.images} />
+                        <CancelIcon
+                          onClick={() => deleteFile(index)}
+                          className={classes.canelIcon}
+                        />
+                      </Grid>
+                    );
+                  })}
+                <Grid item={true} xs={12} md={3}>
+                  <div
+                    className={classes.plusImageButton}
+                    onClick={handlePlusImage}
+                  >
+                    <AddIcon style={{ fontSize: 30 }} />
+                    <Typography
+                      variant="body1"
+                      gutterBottom
+                      style={{
+                        fontWeight: "bolder",
+                        marginTop: 10,
+                        padding: 10,
+                      }}
+                    >
+                      {t("detail_other_image_picker")}
+                    </Typography>
+                  </div>
+                </Grid>
+              </Grid>
+              <input
+                id="fileForm"
+                type="file"
+                // disabled={file.length === 8}
+                className="form-control"
+                style={{ display: "none" }}
+                onChange={uploadSingleFile}
+              />
+
+              <Typography
+                variant="body2"
+                gutterBottom
+                style={{ marginTop: 10 }}
+              >
+                {t("detail_other_image_example")}
+              </Typography>
+            </Grid>
+          </Grid>
+        </div>
       </div>
-    </div>
+    </form>
   );
-}
+});
 export default Detail;

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { makeStyles, withStyles } from "@material-ui/core/styles";
 import {
@@ -42,6 +42,7 @@ const useStyles = makeStyles((theme) => ({
     alignItems: "center",
   },
 }));
+
 const QontoConnector = withStyles({
   alternativeLabel: {
     top: 10,
@@ -64,6 +65,7 @@ const QontoConnector = withStyles({
     borderRadius: 1,
   },
 })(StepConnector);
+
 const useQontoStepIconStyles = makeStyles({
   root: {
     color: "#eaeaf0",
@@ -99,9 +101,14 @@ const useQontoStepIconStyles = makeStyles({
     paddingRight: 5,
   },
 });
-function Category(props) {
+
+const Category = (props) => {
   const { t } = useTranslation();
   const handle = props.location.search;
+
+  let detailRef = useRef(null);
+  let paymentRef = useRef(null);
+
   const idNum = new URLSearchParams(handle).get("category");
   var id = "";
   switch (idNum * 1) {
@@ -136,11 +143,25 @@ function Category(props) {
     return ["Select campaign settings", "Create an ad group"];
   }
   const handleNext = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    if (activeStep === 0) {
+      if (detailRef.current) {
+        if (detailRef.current.checkValidate()) {
+          setActiveStep((prevActiveStep) => prevActiveStep + 1);
+        }
+      }
+    } else if (activeStep === 1) {
+      if (paymentRef.current) {
+        if (paymentRef.current.checkValidate()) {
+          setActiveStep((prevActiveStep) => prevActiveStep + 1);
+        }
+      }
+    }
   };
 
   const handleBack = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    if (detailRef.current && detailRef.current.checkValidate()) {
+      setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    }
   };
 
   const handleReset = () => {
@@ -175,15 +196,14 @@ function Category(props) {
             </StepLabel>
           </Step>
         </Stepper>
-        <div>
-          {activeStep == 0 ? (
-            <Detail id={id} />
-          ) : activeStep == 1 ? (
-            <div>
-              <Payment id={id} />
-            </div>
+
+        <React.Fragment>
+          {activeStep === 0 ? (
+            <Detail id={id} ref={detailRef} />
+          ) : activeStep === 1 ? (
+            <Payment id={id} ref={paymentRef} />
           ) : null}
-        </div>
+        </React.Fragment>
       </div>
 
       <div className={classes.bottomButton}>
@@ -232,7 +252,8 @@ function Category(props) {
       </div>
     </div>
   );
-}
+};
+
 function QontoStepIcon(props) {
   const classes = useQontoStepIconStyles();
   const { active, completed } = props;
